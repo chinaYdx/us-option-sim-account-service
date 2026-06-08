@@ -1,0 +1,130 @@
+enum SimAccountStatus {
+  SimAccountStatusUnknown = 0;
+  SimAccountStatusActive = 1;
+  SimAccountStatusPaused = 2;
+  SimAccountStatusArchived = 3;
+}
+
+enum SimAccountAuditAction {
+  SimAccountAuditActionUnknown = 0;
+  SimAccountAuditActionCreated = 1;
+  SimAccountAuditActionUpdated = 2;
+  SimAccountAuditActionStatusChanged = 3;
+  SimAccountAuditActionBindingChanged = 4;
+  SimAccountAuditActionRiskLimitsChanged = 5;
+}
+
+message EmptyRequest {
+}
+
+message SimAccountRiskLimits {
+  optional double max_single_order_notional = 1;
+  optional double max_daily_notional = 2;
+  optional int32 max_open_order_count = 3;
+  optional int32 max_contract_quantity = 4;
+  optional int64 max_quote_age_ms = 5;
+  optional double max_spread_pct = 6;
+  optional double max_abs_spread = 7;
+  optional bool allow_opening_trades = 8;
+  optional bool allow_naked_short_options = 9;
+}
+
+message SimAccountInfo {
+  string account_id = 1;
+  string display_name = 2;
+  double initial_cash = 3;
+  string currency = 4;
+  SimAccountStatus status = 5;
+  string strategy_task_id = 6;
+  string run_id = 7;
+  string created_by = 8;
+  int64 created_at = 9;
+  int64 updated_at = 10;
+  SimAccountRiskLimits risk_limits = 11;
+}
+
+message CreateSimAccountRequest {
+  string account_id = 1;
+  string display_name = 2;
+  double initial_cash = 3;
+  string currency = 4;
+  string strategy_task_id = 5;
+  string run_id = 6;
+  string created_by = 7;
+  SimAccountRiskLimits risk_limits = 8;
+}
+
+message SimAccountIdRequest {
+  string account_id = 1;
+}
+
+message ListSimAccountsRequest {
+  SimAccountStatus status = 1;
+  string strategy_task_id = 2;
+  string run_id = 3;
+  string query = 4;
+  bool include_archived = 5;
+  int32 limit = 6;
+}
+
+message SimAccountList {
+  repeated SimAccountInfo accounts = 1;
+}
+
+message UpdateSimAccountRequest {
+  string account_id = 1;
+  string display_name = 2;
+  bool update_display_name = 3;
+  string strategy_task_id = 4;
+  string run_id = 5;
+  bool update_binding = 6;
+  SimAccountStatus status = 7;
+  bool update_status = 8;
+  SimAccountRiskLimits risk_limits = 9;
+  bool update_risk_limits = 10;
+  string actor = 11;
+  string reason = 12;
+}
+
+message SimAccountAuditEvent {
+  string event_id = 1;
+  string account_id = 2;
+  SimAccountAuditAction action = 3;
+  string actor = 4;
+  string reason = 5;
+  SimAccountStatus old_status = 6;
+  SimAccountStatus new_status = 7;
+  string old_strategy_task_id = 8;
+  string new_strategy_task_id = 9;
+  string old_run_id = 10;
+  string new_run_id = 11;
+  bool risk_limits_changed = 12;
+  int64 event_at = 13;
+}
+
+message ListSimAccountAuditEventsRequest {
+  string account_id = 1;
+  int64 start_time = 2;
+  int64 end_time = 3;
+  int32 limit = 4;
+}
+
+message SimAccountAuditEventList {
+  repeated SimAccountAuditEvent events = 1;
+}
+
+message SimAccountServiceHealth {
+  string sqlite_path = 1;
+  int64 account_count = 2;
+  int64 audit_event_count = 3;
+  int64 updated_at = 4;
+}
+
+service UsOptionSimAccountService {
+  rpc CreateSimAccount(CreateSimAccountRequest) returns(SimAccountInfo);
+  rpc GetSimAccount(SimAccountIdRequest) returns(SimAccountInfo);
+  rpc ListSimAccounts(ListSimAccountsRequest) returns(SimAccountList);
+  rpc UpdateSimAccount(UpdateSimAccountRequest) returns(SimAccountInfo);
+  rpc ListSimAccountAuditEvents(ListSimAccountAuditEventsRequest) returns(SimAccountAuditEventList);
+  rpc GetSimAccountServiceHealth(EmptyRequest) returns(SimAccountServiceHealth);
+}

@@ -1,0 +1,27 @@
+[package]
+name = "UsOptionSimAccountService"
+version = "0.0.1"
+edition = "2021"
+
+[lib]
+name = "us_option_sim_account_service"
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+anyhow = { version = "1", optional = true }
+dns-lib = { path = "../../dns-lib" }
+rusqlite = { version = "0.32", features = ["bundled"] }
+semver = { version = "1", optional = true }
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+x-com-lib = { package = "adx-rust-lib", path = "../../ADXRustLib" }
+x-common-lib = { package = "adx-common-lib", path = "../../ADXCommonLib", optional = true }
+xport-lib = { path = "../../Adapt/xport-lib", optional = true }
+
+[features]
+runtime-smoke = ["anyhow", "semver", "x-common-lib", "xport-lib"]
+
+[[bin]]
+name = "sim_account_runtime_xrpc_smoke"
+path = "src/bin/sim_account_runtime_xrpc_smoke.rs"
+required-features = ["runtime-smoke"]
