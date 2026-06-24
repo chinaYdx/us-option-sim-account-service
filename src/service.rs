@@ -66,7 +66,7 @@ impl UsOptionSimAccountService {
         };
         account.initial_cash = param.initial_cash;
         account.currency = currency;
-        account.status = Some(SimAccountStatus::SimAccountStatusActive);
+        account.status = Some(SimAccountStatus::Active);
         account.strategy_task_id = param.strategy_task_id.trim().to_owned();
         account.run_id = param.run_id.trim().to_owned();
         account.created_by = default_string(param.created_by.trim(), "system");
@@ -76,7 +76,7 @@ impl UsOptionSimAccountService {
 
         self.store.create_account(
             &account,
-            SimAccountAuditAction::SimAccountAuditActionCreated,
+            SimAccountAuditAction::Created,
             &account.created_by,
             "created",
         )?;
@@ -103,7 +103,7 @@ impl UsOptionSimAccountService {
         param: Box<ListSimAccountsRequest>,
     ) -> x_core::Result<Box<SimAccountList>> {
         let status = match param.status {
-            Some(SimAccountStatus::SimAccountStatusUnknown) | None => None,
+            Some(SimAccountStatus::Unknown) | None => None,
             Some(status) => Some(status as i32),
         };
         let accounts = self.store.list_accounts(
@@ -128,8 +128,8 @@ impl UsOptionSimAccountService {
         let account_id = require_account_id(&param.account_id)?;
         let status = if param.update_status {
             let status = status_value(param.status);
-            if status == SimAccountStatus::SimAccountStatusUnknown as i32 {
-                return status_err!("status update cannot use SimAccountStatusUnknown");
+            if status == SimAccountStatus::Unknown as i32 {
+                return status_err!("status update cannot use Unknown status");
             }
             Some(status)
         } else {
@@ -187,7 +187,6 @@ impl UsOptionSimAccountService {
     pub async fn get_sim_account_service_health(
         &self,
         _ctx: Context,
-        _param: Box<EmptyRequest>,
     ) -> x_core::Result<Box<SimAccountServiceHealth>> {
         let (account_count, audit_event_count) = self.store.counts()?;
         let mut resp = Box::new(SimAccountServiceHealth::default());
@@ -335,7 +334,7 @@ mod tests {
         update.strategy_task_id = "task-002".to_owned();
         update.run_id = "run-002".to_owned();
         update.update_status = true;
-        update.status = Some(SimAccountStatus::SimAccountStatusPaused);
+        update.status = Some(SimAccountStatus::Paused);
         update.update_risk_limits = true;
         update.risk_limits.max_contract_quantity = Some(20);
         update.actor = "risk".to_owned();
@@ -348,7 +347,7 @@ mod tests {
         assert_eq!(updated.run_id, "run-002");
         assert_eq!(
             updated.status,
-            Some(SimAccountStatus::SimAccountStatusPaused)
+            Some(SimAccountStatus::Paused)
         );
         assert_eq!(updated.risk_limits.max_contract_quantity, Some(20));
 
@@ -360,7 +359,7 @@ mod tests {
             .expect("audit");
         assert_eq!(audit.events.len(), 2);
         assert!(audit.events.iter().any(|event| event.action
-            == Some(SimAccountAuditAction::SimAccountAuditActionRiskLimitsChanged)));
+            == Some(SimAccountAuditAction::RiskLimitsChanged)));
 
         let mut restarted = UsOptionSimAccountService::new();
         restarted.init_for_test(&root).await.expect("restart");
@@ -374,7 +373,7 @@ mod tests {
         assert_eq!(loaded.risk_limits.max_contract_quantity, Some(20));
 
         let health = restarted
-            .get_sim_account_service_health(test_ctx(), Box::new(EmptyRequest::default()))
+            .get_sim_account_service_health(test_ctx())
             .await
             .expect("health");
         assert_eq!(health.account_count, 1);
@@ -451,11 +450,11 @@ mod tests {
         let mut bad_status = Box::new(UpdateSimAccountRequest::default());
         bad_status.account_id = "acct-status".to_owned();
         bad_status.update_status = true;
-        bad_status.status = Some(SimAccountStatus::SimAccountStatusUnknown);
+        bad_status.status = Some(SimAccountStatus::Unknown);
         let err = service
             .update_sim_account(test_ctx(), bad_status)
             .await
             .expect_err("unknown status update must fail");
-        assert!(format!("{err:?}").contains("SimAccountStatusUnknown"));
+        assert!(format!("{err:?}").contains("Unknown status"));
     }
 }

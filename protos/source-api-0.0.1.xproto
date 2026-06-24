@@ -1,20 +1,17 @@
 enum SimAccountStatus {
-  SimAccountStatusUnknown = 0;
-  SimAccountStatusActive = 1;
-  SimAccountStatusPaused = 2;
-  SimAccountStatusArchived = 3;
+  Unknown = 0;
+  Active = 1;
+  Paused = 2;
+  Archived = 3;
 }
 
 enum SimAccountAuditAction {
-  SimAccountAuditActionUnknown = 0;
-  SimAccountAuditActionCreated = 1;
-  SimAccountAuditActionUpdated = 2;
-  SimAccountAuditActionStatusChanged = 3;
-  SimAccountAuditActionBindingChanged = 4;
-  SimAccountAuditActionRiskLimitsChanged = 5;
-}
-
-message EmptyRequest {
+  Unknown = 0;
+  Created = 1;
+  Updated = 2;
+  StatusChanged = 3;
+  BindingChanged = 4;
+  RiskLimitsChanged = 5;
 }
 
 message SimAccountRiskLimits {
@@ -126,5 +123,5 @@ service UsOptionSimAccountService {
   rpc ListSimAccounts(ListSimAccountsRequest) returns(SimAccountList);
   rpc UpdateSimAccount(UpdateSimAccountRequest) returns(SimAccountInfo);
   rpc ListSimAccountAuditEvents(ListSimAccountAuditEventsRequest) returns(SimAccountAuditEventList);
-  rpc GetSimAccountServiceHealth(EmptyRequest) returns(SimAccountServiceHealth);
+  rpc GetSimAccountServiceHealth() returns(SimAccountServiceHealth);
 }

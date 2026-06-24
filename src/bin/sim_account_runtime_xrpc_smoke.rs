@@ -15,10 +15,9 @@ use std::{env, sync::Arc};
 use anyhow::{anyhow, bail, Result};
 use semver::Version;
 use x_com::source_api::{
-    CreateSimAccountRequest, EmptyRequest, ListSimAccountAuditEventsRequest,
-    ListSimAccountsRequest, SimAccountAuditAction, SimAccountAuditEventList, SimAccountIdRequest,
-    SimAccountInfo, SimAccountList, SimAccountServiceHealth, SimAccountStatus,
-    UpdateSimAccountRequest,
+    CreateSimAccountRequest, ListSimAccountAuditEventsRequest, ListSimAccountsRequest,
+    SimAccountAuditAction, SimAccountAuditEventList, SimAccountIdRequest, SimAccountInfo,
+    SimAccountList, SimAccountServiceHealth, SimAccountStatus, UpdateSimAccountRequest,
 };
 use x_com_lib::{x_core::serial_request, CodedInputStream, RequestMessage, Status, TargetKey};
 use x_common_lib::{base::id_generator::make_node_id, protocol::protocol_dxc::ProtocolDXCReader};
@@ -93,7 +92,7 @@ async fn run() -> Result<()> {
         &update_request(),
     )
     .await?;
-    if updated.status != Some(SimAccountStatus::SimAccountStatusPaused) {
+    if updated.status != Some(SimAccountStatus::Paused) {
         bail!("updated account status mismatch: {:?}", updated.status);
     }
     if updated.strategy_task_id != "runtime-task-002" || updated.run_id != "runtime-run-002" {
@@ -115,16 +114,15 @@ async fn run() -> Result<()> {
         bail!("unexpected audit event count: {}", audit.events.len());
     }
     if !audit.events.iter().any(|event| {
-        event.action == Some(SimAccountAuditAction::SimAccountAuditActionStatusChanged)
+        event.action == Some(SimAccountAuditAction::StatusChanged)
     }) {
         bail!("audit events did not include status change");
     }
 
-    let health = invoke_once::<EmptyRequest, SimAccountServiceHealth>(
+    let health = invoke_no_param_once::<SimAccountServiceHealth>(
         &outer_service,
         args.xrpc_port,
         HEALTH_API,
-        &Box::new(EmptyRequest::default()),
     )
     .await?;
     if health.account_count != 1 || health.audit_event_count != 2 {
@@ -228,7 +226,7 @@ fn update_request() -> Box<UpdateSimAccountRequest> {
     request.strategy_task_id = "runtime-task-002".to_owned();
     request.run_id = "runtime-run-002".to_owned();
     request.update_status = true;
-    request.status = Some(SimAccountStatus::SimAccountStatusPaused);
+    request.status = Some(SimAccountStatus::Paused);
     request.actor = "runtime-risk".to_owned();
     request.reason = "runtime smoke".to_owned();
     request
@@ -248,7 +246,7 @@ fn assert_created(account: &SimAccountInfo) -> Result<()> {
     if account.currency != "USD" {
         bail!("currency mismatch: {}", account.currency);
     }
-    if account.status != Some(SimAccountStatus::SimAccountStatusActive) {
+    if account.status != Some(SimAccountStatus::Active) {
         bail!("account status mismatch: {:?}", account.status);
     }
     if account.initial_cash != 250_000.0 {
@@ -278,6 +276,23 @@ where
     let channel_id = build_remote_message_channel(conn_id).await?;
     let response_buffer = outer_service
         .send_message(build_target_key(api), channel_id, request_buffer)
+        .await
+        .map_err(status_to_anyhow)?;
+    parse_runtime_response(&response_buffer)
+}
+
+async fn invoke_no_param_once<Resp>(
+    outer_service: &Arc<Box<OuterService>>,
+    xrpc_port: u16,
+    api: &str,
+) -> Result<Box<Resp>>
+where
+    Resp: RequestMessage + Default + 'static,
+{
+    let conn_id = make_node_id("127.0.0.1", xrpc_port);
+    let channel_id = build_remote_message_channel(conn_id).await?;
+    let response_buffer = outer_service
+        .send_message(build_target_key(api), channel_id, Vec::new())
         .await
         .map_err(status_to_anyhow)?;
     parse_runtime_response(&response_buffer)

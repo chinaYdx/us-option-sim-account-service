@@ -181,14 +181,13 @@ pub extern "C" fn dispatch_message(buffer: *const u8, buffer_len: u32) {
             });
         }
         "GetSimAccountServiceHealth" => {
-            let param = parse_request_param(&mut _input_stream);
             x_core::spawn(async move {
                 let Some(service) = get_service() else {
                     let err_status = status_err!("服务已卸载");
                     response_empty_msg(msg_header.request_id, &err_status);
                     return;
                 };
-                let result = service.get_sim_account_service_health(_ctx, param).await;
+                let result = service.get_sim_account_service_health(_ctx).await;
                 response_msg(msg_header.request_id, &result);
             });
         }

@@ -10,13 +10,13 @@ crate-type = ["cdylib"]
 
 [dependencies]
 anyhow = { version = "1", optional = true }
-dns-lib = { path = "../../dns-lib" }
+dns-lib = { path = "F:/AiDaX/dns-lib" }
 rusqlite = { version = "0.32", features = ["bundled"] }
 semver = { version = "1", optional = true }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
-x-com-lib = { package = "adx-rust-lib", path = "../../ADXRustLib" }
-x-common-lib = { package = "adx-common-lib", path = "../../ADXCommonLib", optional = true }
-xport-lib = { path = "../../Adapt/xport-lib", optional = true }
+x-com-lib = { package = "adx-rust-lib", path = "F:/AiDaX/ADXRustLib" }
+x-common-lib = { package = "adx-common-lib", path = "F:/AiDaX/ADXCommonLib", optional = true }
+xport-lib = { path = "F:/AiDaX/Adapt/xport-lib", optional = true }
 
 [features]
 runtime-smoke = ["anyhow", "semver", "x-common-lib", "xport-lib"]

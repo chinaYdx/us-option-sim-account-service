@@ -118,7 +118,7 @@ impl SimAccountStore {
             args.push(Box::new(status));
         } else if !include_archived {
             sql.push_str(" AND status <> ?");
-            args.push(Box::new(SimAccountStatus::SimAccountStatusArchived as i32));
+            args.push(Box::new(SimAccountStatus::Archived as i32));
         }
         if !strategy_task_id.is_empty() {
             sql.push_str(" AND strategy_task_id = ?");
@@ -165,7 +165,7 @@ impl SimAccountStore {
         let old_status = status_value(account.status);
         let old_strategy_task_id = account.strategy_task_id.clone();
         let old_run_id = account.run_id.clone();
-        let mut action = SimAccountAuditAction::SimAccountAuditActionUpdated;
+        let mut action = SimAccountAuditAction::Updated;
         let mut risk_limits_changed = false;
         let now = time_utils::cur_timestamp();
 
@@ -175,16 +175,16 @@ impl SimAccountStore {
         if let Some(strategy_task_id) = patch.strategy_task_id {
             account.strategy_task_id = strategy_task_id;
             account.run_id = patch.run_id.unwrap_or_default();
-            action = SimAccountAuditAction::SimAccountAuditActionBindingChanged;
+            action = SimAccountAuditAction::BindingChanged;
         }
         if let Some(status) = patch.status {
             account.status = status_from_i32(status);
-            action = SimAccountAuditAction::SimAccountAuditActionStatusChanged;
+            action = SimAccountAuditAction::StatusChanged;
         }
         if let Some(risk_limits) = patch.risk_limits {
             account.risk_limits = risk_limits;
             risk_limits_changed = true;
-            action = SimAccountAuditAction::SimAccountAuditActionRiskLimitsChanged;
+            action = SimAccountAuditAction::RiskLimitsChanged;
         }
         account.updated_at = now;
         update_account_tx(&tx, &account)?;
@@ -522,25 +522,25 @@ fn count_table(conn: &Connection, table: &str) -> XResult<i64> {
 
 pub fn status_from_i32(value: i32) -> Option<SimAccountStatus> {
     match value {
-        1 => Some(SimAccountStatus::SimAccountStatusActive),
-        2 => Some(SimAccountStatus::SimAccountStatusPaused),
-        3 => Some(SimAccountStatus::SimAccountStatusArchived),
-        _ => Some(SimAccountStatus::SimAccountStatusUnknown),
+        1 => Some(SimAccountStatus::Active),
+        2 => Some(SimAccountStatus::Paused),
+        3 => Some(SimAccountStatus::Archived),
+        _ => Some(SimAccountStatus::Unknown),
     }
 }
 
 pub fn status_value(value: Option<SimAccountStatus>) -> i32 {
-    value.unwrap_or(SimAccountStatus::SimAccountStatusUnknown) as i32
+    value.unwrap_or(SimAccountStatus::Unknown) as i32
 }
 
 fn audit_action_from_i32(value: i32) -> Option<SimAccountAuditAction> {
     match value {
-        1 => Some(SimAccountAuditAction::SimAccountAuditActionCreated),
-        2 => Some(SimAccountAuditAction::SimAccountAuditActionUpdated),
-        3 => Some(SimAccountAuditAction::SimAccountAuditActionStatusChanged),
-        4 => Some(SimAccountAuditAction::SimAccountAuditActionBindingChanged),
-        5 => Some(SimAccountAuditAction::SimAccountAuditActionRiskLimitsChanged),
-        _ => Some(SimAccountAuditAction::SimAccountAuditActionUnknown),
+        1 => Some(SimAccountAuditAction::Created),
+        2 => Some(SimAccountAuditAction::Updated),
+        3 => Some(SimAccountAuditAction::StatusChanged),
+        4 => Some(SimAccountAuditAction::BindingChanged),
+        5 => Some(SimAccountAuditAction::RiskLimitsChanged),
+        _ => Some(SimAccountAuditAction::Unknown),
     }
 }
 
