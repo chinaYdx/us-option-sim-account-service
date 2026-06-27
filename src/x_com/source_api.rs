@@ -8,15 +8,46 @@ use x_com_lib::{
 };
 
 #[derive(Clone)]
-pub struct SimAccountList {
-    pub accounts: Vec<Box<SimAccountInfo>>,
+pub struct UpdateSimAccountRequest {
+    pub account_id: String,
+    pub display_name: String,
+    pub update_display_name: bool,
+    pub strategy_task_id: String,
+    pub run_id: String,
+    pub update_binding: bool,
+    pub status: Option<SimAccountStatus>,
+    pub update_status: bool,
+    pub risk_limits: Box<SimAccountRiskLimits>,
+    pub update_risk_limits: bool,
+    pub actor: String,
+    pub reason: String,
     pub(crate) cached_size: x_com_lib::rt::CachedSize,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum SimAccountStatus {
+    Unknown = 0,
+    Active = 1,
+    Paused = 2,
+    Archived = 3,
+}
+
 #[derive(Clone)]
-pub struct SimAccountAuditEventList {
-    pub events: Vec<Box<SimAccountAuditEvent>>,
+pub struct ListSimAccountsRequest {
+    pub status: Option<SimAccountStatus>,
+    pub strategy_task_id: String,
+    pub run_id: String,
+    pub query: String,
+    pub include_archived: bool,
+    pub limit: i32,
     pub(crate) cached_size: x_com_lib::rt::CachedSize,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum SimAccountTradingEngine {
+    Unknown = 0,
+    DqteaSim = 1,
+    MoomooSimulate = 2,
 }
 
 #[derive(Clone)]
@@ -34,6 +65,12 @@ pub struct SimAccountRiskLimits {
 }
 
 #[derive(Clone)]
+pub struct SimAccountList {
+    pub accounts: Vec<Box<SimAccountInfo>>,
+    pub(crate) cached_size: x_com_lib::rt::CachedSize,
+}
+
+#[derive(Clone)]
 pub struct SimAccountServiceHealth {
     pub sqlite_path: String,
     pub account_count: i64,
@@ -43,61 +80,12 @@ pub struct SimAccountServiceHealth {
 }
 
 #[derive(Clone)]
-pub struct ListSimAccountsRequest {
-    pub status: Option<SimAccountStatus>,
-    pub strategy_task_id: String,
-    pub run_id: String,
-    pub query: String,
-    pub include_archived: bool,
+pub struct ListSimAccountAuditEventsRequest {
+    pub account_id: String,
+    pub start_time: i64,
+    pub end_time: i64,
     pub limit: i32,
     pub(crate) cached_size: x_com_lib::rt::CachedSize,
-}
-
-#[derive(Clone)]
-pub struct UpdateSimAccountRequest {
-    pub account_id: String,
-    pub display_name: String,
-    pub update_display_name: bool,
-    pub strategy_task_id: String,
-    pub run_id: String,
-    pub update_binding: bool,
-    pub status: Option<SimAccountStatus>,
-    pub update_status: bool,
-    pub risk_limits: Box<SimAccountRiskLimits>,
-    pub update_risk_limits: bool,
-    pub actor: String,
-    pub reason: String,
-    pub(crate) cached_size: x_com_lib::rt::CachedSize,
-}
-
-#[derive(Clone)]
-pub struct SimAccountInfo {
-    pub account_id: String,
-    pub display_name: String,
-    pub initial_cash: f64,
-    pub currency: String,
-    pub status: Option<SimAccountStatus>,
-    pub strategy_task_id: String,
-    pub run_id: String,
-    pub created_by: String,
-    pub created_at: i64,
-    pub updated_at: i64,
-    pub risk_limits: Box<SimAccountRiskLimits>,
-    pub(crate) cached_size: x_com_lib::rt::CachedSize,
-}
-
-#[derive(Clone)]
-pub struct SimAccountIdRequest {
-    pub account_id: String,
-    pub(crate) cached_size: x_com_lib::rt::CachedSize,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum SimAccountStatus {
-    Unknown = 0,
-    Active = 1,
-    Paused = 2,
-    Archived = 3,
 }
 
 #[derive(Clone)]
@@ -118,25 +106,6 @@ pub struct SimAccountAuditEvent {
     pub(crate) cached_size: x_com_lib::rt::CachedSize,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum SimAccountAuditAction {
-    Unknown = 0,
-    Created = 1,
-    Updated = 2,
-    StatusChanged = 3,
-    BindingChanged = 4,
-    RiskLimitsChanged = 5,
-}
-
-#[derive(Clone)]
-pub struct ListSimAccountAuditEventsRequest {
-    pub account_id: String,
-    pub start_time: i64,
-    pub end_time: i64,
-    pub limit: i32,
-    pub(crate) cached_size: x_com_lib::rt::CachedSize,
-}
-
 #[derive(Clone)]
 pub struct CreateSimAccountRequest {
     pub account_id: String,
@@ -147,7 +116,47 @@ pub struct CreateSimAccountRequest {
     pub run_id: String,
     pub created_by: String,
     pub risk_limits: Box<SimAccountRiskLimits>,
+    pub trading_engine: Option<SimAccountTradingEngine>,
     pub(crate) cached_size: x_com_lib::rt::CachedSize,
+}
+
+#[derive(Clone)]
+pub struct SimAccountAuditEventList {
+    pub events: Vec<Box<SimAccountAuditEvent>>,
+    pub(crate) cached_size: x_com_lib::rt::CachedSize,
+}
+
+#[derive(Clone)]
+pub struct SimAccountIdRequest {
+    pub account_id: String,
+    pub(crate) cached_size: x_com_lib::rt::CachedSize,
+}
+
+#[derive(Clone)]
+pub struct SimAccountInfo {
+    pub account_id: String,
+    pub display_name: String,
+    pub initial_cash: f64,
+    pub currency: String,
+    pub status: Option<SimAccountStatus>,
+    pub strategy_task_id: String,
+    pub run_id: String,
+    pub created_by: String,
+    pub created_at: i64,
+    pub updated_at: i64,
+    pub risk_limits: Box<SimAccountRiskLimits>,
+    pub trading_engine: Option<SimAccountTradingEngine>,
+    pub(crate) cached_size: x_com_lib::rt::CachedSize,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum SimAccountAuditAction {
+    Unknown = 0,
+    Created = 1,
+    Updated = 2,
+    StatusChanged = 3,
+    BindingChanged = 4,
+    RiskLimitsChanged = 5,
 }
 
 impl std::fmt::Debug for SimAccountAuditEvent {
@@ -334,762 +343,6 @@ impl RequestMessage for SimAccountAuditEvent {
                 }
                 104 => {
                     self.event_at = is.read_int64().map_err(pb_error_to_status)?;
-                }
-                _ => {
-                    let wire_type = extract_wire_type_from_tag(tag);
-                    if wire_type.is_none() {
-                        return Err(Status::error("消息格式出错".into()));
-                    }
-                    let result = is.skip_field(wire_type.unwrap());
-                    if let Err(err) = result {
-                        return Err(Status::error(err.to_string()));
-                    }
-                }
-            }
-        }
-        Ok(())
-    }
-}
-
-impl std::fmt::Debug for SimAccountRiskLimits {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("SimAccountRiskLimits")
-            .field("max_single_order_notional", &self.max_single_order_notional)
-            .field("max_daily_notional", &self.max_daily_notional)
-            .field("max_open_order_count", &self.max_open_order_count)
-            .field("max_contract_quantity", &self.max_contract_quantity)
-            .field("max_quote_age_ms", &self.max_quote_age_ms)
-            .field("max_spread_pct", &self.max_spread_pct)
-            .field("max_abs_spread", &self.max_abs_spread)
-            .field("allow_opening_trades", &self.allow_opening_trades)
-            .field("allow_naked_short_options", &self.allow_naked_short_options)
-            .finish()
-    }
-}
-
-impl Default for SimAccountRiskLimits {
-    fn default() -> Self {
-        SimAccountRiskLimits {
-            max_single_order_notional: None,
-            max_daily_notional: None,
-            max_open_order_count: None,
-            max_contract_quantity: None,
-            max_quote_age_ms: None,
-            max_spread_pct: None,
-            max_abs_spread: None,
-            allow_opening_trades: None,
-            allow_naked_short_options: None,
-            cached_size: x_com_lib::rt::CachedSize::new(),
-        }
-    }
-}
-
-impl RequestMessage for SimAccountRiskLimits {
-    fn compute_size(&self) -> u64 {
-        let mut my_size = 0;
-        if let Some(_v) = self.max_single_order_notional {
-            my_size += 9;
-        }
-        if let Some(_v) = self.max_daily_notional {
-            my_size += 9;
-        }
-        if let Some(v) = self.max_open_order_count {
-            my_size += x_com_lib::rt::int32_size(3, v);
-        }
-        if let Some(v) = self.max_contract_quantity {
-            my_size += x_com_lib::rt::int32_size(4, v);
-        }
-        if let Some(v) = self.max_quote_age_ms {
-            my_size += x_com_lib::rt::int64_size(5, v);
-        }
-        if let Some(_v) = self.max_spread_pct {
-            my_size += 9;
-        }
-        if let Some(_v) = self.max_abs_spread {
-            my_size += 9;
-        }
-        if let Some(_v) = self.allow_opening_trades {
-            my_size += 2;
-        }
-        if let Some(_v) = self.allow_naked_short_options {
-            my_size += 2;
-        }
-        self.cached_size.set(my_size as u32);
-        my_size
-    }
-
-    fn serial_with_output_stream(
-        &self,
-        os: &mut x_com_lib::CodedOutputStream<'_>,
-    ) -> Result<(), Status> {
-        if let Some(v) = self.max_single_order_notional {
-            os.write_double(1, v).unwrap();
-        }
-        if let Some(v) = self.max_daily_notional {
-            os.write_double(2, v).unwrap();
-        }
-        if let Some(v) = self.max_open_order_count {
-            os.write_int32(3, v).unwrap();
-        }
-        if let Some(v) = self.max_contract_quantity {
-            os.write_int32(4, v).unwrap();
-        }
-        if let Some(v) = self.max_quote_age_ms {
-            os.write_int64(5, v).unwrap();
-        }
-        if let Some(v) = self.max_spread_pct {
-            os.write_double(6, v).unwrap();
-        }
-        if let Some(v) = self.max_abs_spread {
-            os.write_double(7, v).unwrap();
-        }
-        if let Some(v) = self.allow_opening_trades {
-            os.write_bool(8, v).unwrap();
-        }
-        if let Some(v) = self.allow_naked_short_options {
-            os.write_bool(9, v).unwrap();
-        }
-        Ok(())
-    }
-
-    fn parse_from_input_stream(
-        &mut self,
-        is: &mut x_com_lib::CodedInputStream<'_>,
-    ) -> Result<(), Status> {
-        while let Some(tag) = is.read_raw_tag_or_eof().unwrap() {
-            match tag {
-                9 => {
-                    self.max_single_order_notional =
-                        Some(is.read_double().map_err(pb_error_to_status)?);
-                }
-                17 => {
-                    self.max_daily_notional = Some(is.read_double().map_err(pb_error_to_status)?);
-                }
-                24 => {
-                    self.max_open_order_count = Some(is.read_int32().map_err(pb_error_to_status)?);
-                }
-                32 => {
-                    self.max_contract_quantity = Some(is.read_int32().map_err(pb_error_to_status)?);
-                }
-                40 => {
-                    self.max_quote_age_ms = Some(is.read_int64().map_err(pb_error_to_status)?);
-                }
-                49 => {
-                    self.max_spread_pct = Some(is.read_double().map_err(pb_error_to_status)?);
-                }
-                57 => {
-                    self.max_abs_spread = Some(is.read_double().map_err(pb_error_to_status)?);
-                }
-                64 => {
-                    self.allow_opening_trades = Some(is.read_bool().map_err(pb_error_to_status)?);
-                }
-                72 => {
-                    self.allow_naked_short_options =
-                        Some(is.read_bool().map_err(pb_error_to_status)?);
-                }
-                _ => {
-                    let wire_type = extract_wire_type_from_tag(tag);
-                    if wire_type.is_none() {
-                        return Err(Status::error("消息格式出错".into()));
-                    }
-                    let result = is.skip_field(wire_type.unwrap());
-                    if let Err(err) = result {
-                        return Err(Status::error(err.to_string()));
-                    }
-                }
-            }
-        }
-        Ok(())
-    }
-}
-
-impl std::fmt::Debug for ListSimAccountAuditEventsRequest {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("ListSimAccountAuditEventsRequest")
-            .field("account_id", &self.account_id)
-            .field("start_time", &self.start_time)
-            .field("end_time", &self.end_time)
-            .field("limit", &self.limit)
-            .finish()
-    }
-}
-
-impl Default for ListSimAccountAuditEventsRequest {
-    fn default() -> Self {
-        ListSimAccountAuditEventsRequest {
-            account_id: String::default(),
-            start_time: 0,
-            end_time: 0,
-            limit: 0,
-            cached_size: x_com_lib::rt::CachedSize::new(),
-        }
-    }
-}
-
-impl RequestMessage for ListSimAccountAuditEventsRequest {
-    fn compute_size(&self) -> u64 {
-        let mut my_size = 0;
-        if !self.account_id.is_empty() {
-            my_size += x_com_lib::rt::string_size(1, &self.account_id);
-        }
-        if self.start_time != 0 {
-            my_size += x_com_lib::rt::int64_size(2, self.start_time);
-        }
-        if self.end_time != 0 {
-            my_size += x_com_lib::rt::int64_size(3, self.end_time);
-        }
-        if self.limit != 0 {
-            my_size += x_com_lib::rt::int32_size(4, self.limit);
-        }
-        self.cached_size.set(my_size as u32);
-        my_size
-    }
-
-    fn serial_with_output_stream(
-        &self,
-        os: &mut x_com_lib::CodedOutputStream<'_>,
-    ) -> Result<(), Status> {
-        if !self.account_id.is_empty() {
-            os.write_string(1, &self.account_id).unwrap();
-        }
-        if self.start_time != 0 {
-            os.write_int64(2, self.start_time).unwrap();
-        }
-        if self.end_time != 0 {
-            os.write_int64(3, self.end_time).unwrap();
-        }
-        if self.limit != 0 {
-            os.write_int32(4, self.limit).unwrap();
-        }
-        Ok(())
-    }
-
-    fn parse_from_input_stream(
-        &mut self,
-        is: &mut x_com_lib::CodedInputStream<'_>,
-    ) -> Result<(), Status> {
-        while let Some(tag) = is.read_raw_tag_or_eof().unwrap() {
-            match tag {
-                10 => {
-                    self.account_id = is.read_string().map_err(pb_error_to_status)?;
-                }
-                16 => {
-                    self.start_time = is.read_int64().map_err(pb_error_to_status)?;
-                }
-                24 => {
-                    self.end_time = is.read_int64().map_err(pb_error_to_status)?;
-                }
-                32 => {
-                    self.limit = is.read_int32().map_err(pb_error_to_status)?;
-                }
-                _ => {
-                    let wire_type = extract_wire_type_from_tag(tag);
-                    if wire_type.is_none() {
-                        return Err(Status::error("消息格式出错".into()));
-                    }
-                    let result = is.skip_field(wire_type.unwrap());
-                    if let Err(err) = result {
-                        return Err(Status::error(err.to_string()));
-                    }
-                }
-            }
-        }
-        Ok(())
-    }
-}
-
-impl std::fmt::Debug for SimAccountServiceHealth {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("SimAccountServiceHealth")
-            .field("sqlite_path", &self.sqlite_path)
-            .field("account_count", &self.account_count)
-            .field("audit_event_count", &self.audit_event_count)
-            .field("updated_at", &self.updated_at)
-            .finish()
-    }
-}
-
-impl Default for SimAccountServiceHealth {
-    fn default() -> Self {
-        SimAccountServiceHealth {
-            sqlite_path: String::default(),
-            account_count: 0,
-            audit_event_count: 0,
-            updated_at: 0,
-            cached_size: x_com_lib::rt::CachedSize::new(),
-        }
-    }
-}
-
-impl RequestMessage for SimAccountServiceHealth {
-    fn compute_size(&self) -> u64 {
-        let mut my_size = 0;
-        if !self.sqlite_path.is_empty() {
-            my_size += x_com_lib::rt::string_size(1, &self.sqlite_path);
-        }
-        if self.account_count != 0 {
-            my_size += x_com_lib::rt::int64_size(2, self.account_count);
-        }
-        if self.audit_event_count != 0 {
-            my_size += x_com_lib::rt::int64_size(3, self.audit_event_count);
-        }
-        if self.updated_at != 0 {
-            my_size += x_com_lib::rt::int64_size(4, self.updated_at);
-        }
-        self.cached_size.set(my_size as u32);
-        my_size
-    }
-
-    fn serial_with_output_stream(
-        &self,
-        os: &mut x_com_lib::CodedOutputStream<'_>,
-    ) -> Result<(), Status> {
-        if !self.sqlite_path.is_empty() {
-            os.write_string(1, &self.sqlite_path).unwrap();
-        }
-        if self.account_count != 0 {
-            os.write_int64(2, self.account_count).unwrap();
-        }
-        if self.audit_event_count != 0 {
-            os.write_int64(3, self.audit_event_count).unwrap();
-        }
-        if self.updated_at != 0 {
-            os.write_int64(4, self.updated_at).unwrap();
-        }
-        Ok(())
-    }
-
-    fn parse_from_input_stream(
-        &mut self,
-        is: &mut x_com_lib::CodedInputStream<'_>,
-    ) -> Result<(), Status> {
-        while let Some(tag) = is.read_raw_tag_or_eof().unwrap() {
-            match tag {
-                10 => {
-                    self.sqlite_path = is.read_string().map_err(pb_error_to_status)?;
-                }
-                16 => {
-                    self.account_count = is.read_int64().map_err(pb_error_to_status)?;
-                }
-                24 => {
-                    self.audit_event_count = is.read_int64().map_err(pb_error_to_status)?;
-                }
-                32 => {
-                    self.updated_at = is.read_int64().map_err(pb_error_to_status)?;
-                }
-                _ => {
-                    let wire_type = extract_wire_type_from_tag(tag);
-                    if wire_type.is_none() {
-                        return Err(Status::error("消息格式出错".into()));
-                    }
-                    let result = is.skip_field(wire_type.unwrap());
-                    if let Err(err) = result {
-                        return Err(Status::error(err.to_string()));
-                    }
-                }
-            }
-        }
-        Ok(())
-    }
-}
-
-impl std::fmt::Debug for ListSimAccountsRequest {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("ListSimAccountsRequest")
-            .field("status", &self.status)
-            .field("strategy_task_id", &self.strategy_task_id)
-            .field("run_id", &self.run_id)
-            .field("query", &self.query)
-            .field("include_archived", &self.include_archived)
-            .field("limit", &self.limit)
-            .finish()
-    }
-}
-
-impl Default for ListSimAccountsRequest {
-    fn default() -> Self {
-        ListSimAccountsRequest {
-            status: SimAccountStatus::from_i32(0),
-            strategy_task_id: String::default(),
-            run_id: String::default(),
-            query: String::default(),
-            include_archived: false,
-            limit: 0,
-            cached_size: x_com_lib::rt::CachedSize::new(),
-        }
-    }
-}
-
-impl RequestMessage for ListSimAccountsRequest {
-    fn compute_size(&self) -> u64 {
-        let mut my_size = 0;
-        if let Some(value) = self.status.as_ref() {
-            my_size += x_com_lib::rt::int32_size(1, *value as i32);
-        }
-        if !self.strategy_task_id.is_empty() {
-            my_size += x_com_lib::rt::string_size(2, &self.strategy_task_id);
-        }
-        if !self.run_id.is_empty() {
-            my_size += x_com_lib::rt::string_size(3, &self.run_id);
-        }
-        if !self.query.is_empty() {
-            my_size += x_com_lib::rt::string_size(4, &self.query);
-        }
-        if self.include_archived != false {
-            my_size += 2;
-        }
-        if self.limit != 0 {
-            my_size += x_com_lib::rt::int32_size(6, self.limit);
-        }
-        self.cached_size.set(my_size as u32);
-        my_size
-    }
-
-    fn serial_with_output_stream(
-        &self,
-        os: &mut x_com_lib::CodedOutputStream<'_>,
-    ) -> Result<(), Status> {
-        if let Some(value) = self.status.as_ref() {
-            os.write_enum(1, *value as i32).unwrap();
-        }
-        if !self.strategy_task_id.is_empty() {
-            os.write_string(2, &self.strategy_task_id).unwrap();
-        }
-        if !self.run_id.is_empty() {
-            os.write_string(3, &self.run_id).unwrap();
-        }
-        if !self.query.is_empty() {
-            os.write_string(4, &self.query).unwrap();
-        }
-        if self.include_archived != false {
-            os.write_bool(5, self.include_archived).unwrap();
-        }
-        if self.limit != 0 {
-            os.write_int32(6, self.limit).unwrap();
-        }
-        Ok(())
-    }
-
-    fn parse_from_input_stream(
-        &mut self,
-        is: &mut x_com_lib::CodedInputStream<'_>,
-    ) -> Result<(), Status> {
-        while let Some(tag) = is.read_raw_tag_or_eof().unwrap() {
-            match tag {
-                8 => {
-                    let value =
-                        SimAccountStatus::from_i32(is.read_int32().map_err(pb_error_to_status)?);
-                    self.status = value;
-                }
-                18 => {
-                    self.strategy_task_id = is.read_string().map_err(pb_error_to_status)?;
-                }
-                26 => {
-                    self.run_id = is.read_string().map_err(pb_error_to_status)?;
-                }
-                34 => {
-                    self.query = is.read_string().map_err(pb_error_to_status)?;
-                }
-                40 => {
-                    self.include_archived = is.read_bool().map_err(pb_error_to_status)?;
-                }
-                48 => {
-                    self.limit = is.read_int32().map_err(pb_error_to_status)?;
-                }
-                _ => {
-                    let wire_type = extract_wire_type_from_tag(tag);
-                    if wire_type.is_none() {
-                        return Err(Status::error("消息格式出错".into()));
-                    }
-                    let result = is.skip_field(wire_type.unwrap());
-                    if let Err(err) = result {
-                        return Err(Status::error(err.to_string()));
-                    }
-                }
-            }
-        }
-        Ok(())
-    }
-}
-
-impl std::fmt::Debug for CreateSimAccountRequest {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("CreateSimAccountRequest")
-            .field("account_id", &self.account_id)
-            .field("display_name", &self.display_name)
-            .field("initial_cash", &self.initial_cash)
-            .field("currency", &self.currency)
-            .field("strategy_task_id", &self.strategy_task_id)
-            .field("run_id", &self.run_id)
-            .field("created_by", &self.created_by)
-            .field("risk_limits", &self.risk_limits)
-            .finish()
-    }
-}
-
-impl Default for CreateSimAccountRequest {
-    fn default() -> Self {
-        CreateSimAccountRequest {
-            account_id: String::default(),
-            display_name: String::default(),
-            initial_cash: 0.0,
-            currency: String::default(),
-            strategy_task_id: String::default(),
-            run_id: String::default(),
-            created_by: String::default(),
-            risk_limits: Box::new(SimAccountRiskLimits::default()),
-            cached_size: x_com_lib::rt::CachedSize::new(),
-        }
-    }
-}
-
-impl RequestMessage for CreateSimAccountRequest {
-    fn compute_size(&self) -> u64 {
-        let mut my_size = 0;
-        if !self.account_id.is_empty() {
-            my_size += x_com_lib::rt::string_size(1, &self.account_id);
-        }
-        if !self.display_name.is_empty() {
-            my_size += x_com_lib::rt::string_size(2, &self.display_name);
-        }
-        if self.initial_cash != 0.0 {
-            my_size += 9;
-        }
-        if !self.currency.is_empty() {
-            my_size += x_com_lib::rt::string_size(4, &self.currency);
-        }
-        if !self.strategy_task_id.is_empty() {
-            my_size += x_com_lib::rt::string_size(5, &self.strategy_task_id);
-        }
-        if !self.run_id.is_empty() {
-            my_size += x_com_lib::rt::string_size(6, &self.run_id);
-        }
-        if !self.created_by.is_empty() {
-            my_size += x_com_lib::rt::string_size(7, &self.created_by);
-        }
-        {
-            let len = self.risk_limits.compute_size();
-            my_size += 1 + x_com_lib::rt::compute_raw_varint64_size(len) + len;
-        }
-        self.cached_size.set(my_size as u32);
-        my_size
-    }
-
-    fn serial_with_output_stream(
-        &self,
-        os: &mut x_com_lib::CodedOutputStream<'_>,
-    ) -> Result<(), Status> {
-        if !self.account_id.is_empty() {
-            os.write_string(1, &self.account_id).unwrap();
-        }
-        if !self.display_name.is_empty() {
-            os.write_string(2, &self.display_name).unwrap();
-        }
-        if self.initial_cash != 0.0 {
-            os.write_double(3, self.initial_cash).unwrap();
-        }
-        if !self.currency.is_empty() {
-            os.write_string(4, &self.currency).unwrap();
-        }
-        if !self.strategy_task_id.is_empty() {
-            os.write_string(5, &self.strategy_task_id).unwrap();
-        }
-        if !self.run_id.is_empty() {
-            os.write_string(6, &self.run_id).unwrap();
-        }
-        if !self.created_by.is_empty() {
-            os.write_string(7, &self.created_by).unwrap();
-        }
-        {
-            os.write_tag(8, x_com_lib::rt::WireType::LengthDelimited)
-                .unwrap();
-            os.write_raw_varint32(self.risk_limits.cached_size.get() as u32)
-                .unwrap();
-            self.risk_limits.serial_with_output_stream(os).unwrap();
-        }
-        Ok(())
-    }
-
-    fn parse_from_input_stream(
-        &mut self,
-        is: &mut x_com_lib::CodedInputStream<'_>,
-    ) -> Result<(), Status> {
-        while let Some(tag) = is.read_raw_tag_or_eof().unwrap() {
-            match tag {
-                10 => {
-                    self.account_id = is.read_string().map_err(pb_error_to_status)?;
-                }
-                18 => {
-                    self.display_name = is.read_string().map_err(pb_error_to_status)?;
-                }
-                25 => {
-                    self.initial_cash = is.read_double().map_err(pb_error_to_status)?;
-                }
-                34 => {
-                    self.currency = is.read_string().map_err(pb_error_to_status)?;
-                }
-                42 => {
-                    self.strategy_task_id = is.read_string().map_err(pb_error_to_status)?;
-                }
-                50 => {
-                    self.run_id = is.read_string().map_err(pb_error_to_status)?;
-                }
-                58 => {
-                    self.created_by = is.read_string().map_err(pb_error_to_status)?;
-                }
-                66 => {
-                    let len = is.read_raw_varint64();
-                    let len = len.map_err(pb_error_to_status)?;
-                    let old_limit = is.push_limit(len);
-                    let old_limit = old_limit.unwrap();
-                    self.risk_limits.parse_from_input_stream(is)?;
-                    is.pop_limit(old_limit);
-                }
-                _ => {
-                    let wire_type = extract_wire_type_from_tag(tag);
-                    if wire_type.is_none() {
-                        return Err(Status::error("消息格式出错".into()));
-                    }
-                    let result = is.skip_field(wire_type.unwrap());
-                    if let Err(err) = result {
-                        return Err(Status::error(err.to_string()));
-                    }
-                }
-            }
-        }
-        Ok(())
-    }
-}
-
-impl std::fmt::Debug for SimAccountAuditEventList {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("SimAccountAuditEventList")
-            .field("events", &self.events)
-            .finish()
-    }
-}
-
-impl Default for SimAccountAuditEventList {
-    fn default() -> Self {
-        SimAccountAuditEventList {
-            events: Vec::new(),
-            cached_size: x_com_lib::rt::CachedSize::new(),
-        }
-    }
-}
-
-impl RequestMessage for SimAccountAuditEventList {
-    fn compute_size(&self) -> u64 {
-        let mut my_size = 0;
-        for value in &self.events {
-            let len = value.compute_size();
-            my_size += 1 + x_com_lib::rt::compute_raw_varint64_size(len) + len;
-        }
-        self.cached_size.set(my_size as u32);
-        my_size
-    }
-
-    fn serial_with_output_stream(
-        &self,
-        os: &mut x_com_lib::CodedOutputStream<'_>,
-    ) -> Result<(), Status> {
-        for v in &self.events {
-            os.write_tag(1, x_com_lib::rt::WireType::LengthDelimited)
-                .unwrap();
-            os.write_raw_varint32(v.cached_size.get() as u32).unwrap();
-            v.serial_with_output_stream(os).unwrap();
-        }
-        Ok(())
-    }
-
-    fn parse_from_input_stream(
-        &mut self,
-        is: &mut x_com_lib::CodedInputStream<'_>,
-    ) -> Result<(), Status> {
-        while let Some(tag) = is.read_raw_tag_or_eof().unwrap() {
-            match tag {
-                10 => {
-                    let len = is.read_raw_varint64();
-                    let len = len.map_err(pb_error_to_status)?;
-                    let old_limit = is.push_limit(len);
-                    let old_limit = old_limit.unwrap();
-                    let mut value = Box::new(SimAccountAuditEvent::default());
-                    value.parse_from_input_stream(is)?;
-                    self.events.push(value);
-                    is.pop_limit(old_limit);
-                }
-                _ => {
-                    let wire_type = extract_wire_type_from_tag(tag);
-                    if wire_type.is_none() {
-                        return Err(Status::error("消息格式出错".into()));
-                    }
-                    let result = is.skip_field(wire_type.unwrap());
-                    if let Err(err) = result {
-                        return Err(Status::error(err.to_string()));
-                    }
-                }
-            }
-        }
-        Ok(())
-    }
-}
-
-impl std::fmt::Debug for SimAccountList {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("SimAccountList")
-            .field("accounts", &self.accounts)
-            .finish()
-    }
-}
-
-impl Default for SimAccountList {
-    fn default() -> Self {
-        SimAccountList {
-            accounts: Vec::new(),
-            cached_size: x_com_lib::rt::CachedSize::new(),
-        }
-    }
-}
-
-impl RequestMessage for SimAccountList {
-    fn compute_size(&self) -> u64 {
-        let mut my_size = 0;
-        for value in &self.accounts {
-            let len = value.compute_size();
-            my_size += 1 + x_com_lib::rt::compute_raw_varint64_size(len) + len;
-        }
-        self.cached_size.set(my_size as u32);
-        my_size
-    }
-
-    fn serial_with_output_stream(
-        &self,
-        os: &mut x_com_lib::CodedOutputStream<'_>,
-    ) -> Result<(), Status> {
-        for v in &self.accounts {
-            os.write_tag(1, x_com_lib::rt::WireType::LengthDelimited)
-                .unwrap();
-            os.write_raw_varint32(v.cached_size.get() as u32).unwrap();
-            v.serial_with_output_stream(os).unwrap();
-        }
-        Ok(())
-    }
-
-    fn parse_from_input_stream(
-        &mut self,
-        is: &mut x_com_lib::CodedInputStream<'_>,
-    ) -> Result<(), Status> {
-        while let Some(tag) = is.read_raw_tag_or_eof().unwrap() {
-            match tag {
-                10 => {
-                    let len = is.read_raw_varint64();
-                    let len = len.map_err(pb_error_to_status)?;
-                    let old_limit = is.push_limit(len);
-                    let old_limit = old_limit.unwrap();
-                    let mut value = Box::new(SimAccountInfo::default());
-                    value.parse_from_input_stream(is)?;
-                    self.accounts.push(value);
-                    is.pop_limit(old_limit);
                 }
                 _ => {
                     let wire_type = extract_wire_type_from_tag(tag);
@@ -1302,44 +555,40 @@ impl RequestMessage for UpdateSimAccountRequest {
     }
 }
 
-impl std::fmt::Debug for SimAccountInfo {
+impl std::fmt::Debug for CreateSimAccountRequest {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("SimAccountInfo")
+        f.debug_struct("CreateSimAccountRequest")
             .field("account_id", &self.account_id)
             .field("display_name", &self.display_name)
             .field("initial_cash", &self.initial_cash)
             .field("currency", &self.currency)
-            .field("status", &self.status)
             .field("strategy_task_id", &self.strategy_task_id)
             .field("run_id", &self.run_id)
             .field("created_by", &self.created_by)
-            .field("created_at", &self.created_at)
-            .field("updated_at", &self.updated_at)
             .field("risk_limits", &self.risk_limits)
+            .field("trading_engine", &self.trading_engine)
             .finish()
     }
 }
 
-impl Default for SimAccountInfo {
+impl Default for CreateSimAccountRequest {
     fn default() -> Self {
-        SimAccountInfo {
+        CreateSimAccountRequest {
             account_id: String::default(),
             display_name: String::default(),
             initial_cash: 0.0,
             currency: String::default(),
-            status: SimAccountStatus::from_i32(0),
             strategy_task_id: String::default(),
             run_id: String::default(),
             created_by: String::default(),
-            created_at: 0,
-            updated_at: 0,
             risk_limits: Box::new(SimAccountRiskLimits::default()),
+            trading_engine: SimAccountTradingEngine::from_i32(0),
             cached_size: x_com_lib::rt::CachedSize::new(),
         }
     }
 }
 
-impl RequestMessage for SimAccountInfo {
+impl RequestMessage for CreateSimAccountRequest {
     fn compute_size(&self) -> u64 {
         let mut my_size = 0;
         if !self.account_id.is_empty() {
@@ -1354,27 +603,21 @@ impl RequestMessage for SimAccountInfo {
         if !self.currency.is_empty() {
             my_size += x_com_lib::rt::string_size(4, &self.currency);
         }
-        if let Some(value) = self.status.as_ref() {
-            my_size += x_com_lib::rt::int32_size(5, *value as i32);
-        }
         if !self.strategy_task_id.is_empty() {
-            my_size += x_com_lib::rt::string_size(6, &self.strategy_task_id);
+            my_size += x_com_lib::rt::string_size(5, &self.strategy_task_id);
         }
         if !self.run_id.is_empty() {
-            my_size += x_com_lib::rt::string_size(7, &self.run_id);
+            my_size += x_com_lib::rt::string_size(6, &self.run_id);
         }
         if !self.created_by.is_empty() {
-            my_size += x_com_lib::rt::string_size(8, &self.created_by);
-        }
-        if self.created_at != 0 {
-            my_size += x_com_lib::rt::int64_size(9, self.created_at);
-        }
-        if self.updated_at != 0 {
-            my_size += x_com_lib::rt::int64_size(10, self.updated_at);
+            my_size += x_com_lib::rt::string_size(7, &self.created_by);
         }
         {
             let len = self.risk_limits.compute_size();
             my_size += 1 + x_com_lib::rt::compute_raw_varint64_size(len) + len;
+        }
+        if let Some(value) = self.trading_engine.as_ref() {
+            my_size += x_com_lib::rt::int32_size(9, *value as i32);
         }
         self.cached_size.set(my_size as u32);
         my_size
@@ -1396,30 +639,24 @@ impl RequestMessage for SimAccountInfo {
         if !self.currency.is_empty() {
             os.write_string(4, &self.currency).unwrap();
         }
-        if let Some(value) = self.status.as_ref() {
-            os.write_enum(5, *value as i32).unwrap();
-        }
         if !self.strategy_task_id.is_empty() {
-            os.write_string(6, &self.strategy_task_id).unwrap();
+            os.write_string(5, &self.strategy_task_id).unwrap();
         }
         if !self.run_id.is_empty() {
-            os.write_string(7, &self.run_id).unwrap();
+            os.write_string(6, &self.run_id).unwrap();
         }
         if !self.created_by.is_empty() {
-            os.write_string(8, &self.created_by).unwrap();
-        }
-        if self.created_at != 0 {
-            os.write_int64(9, self.created_at).unwrap();
-        }
-        if self.updated_at != 0 {
-            os.write_int64(10, self.updated_at).unwrap();
+            os.write_string(7, &self.created_by).unwrap();
         }
         {
-            os.write_tag(11, x_com_lib::rt::WireType::LengthDelimited)
+            os.write_tag(8, x_com_lib::rt::WireType::LengthDelimited)
                 .unwrap();
             os.write_raw_varint32(self.risk_limits.cached_size.get() as u32)
                 .unwrap();
             self.risk_limits.serial_with_output_stream(os).unwrap();
+        }
+        if let Some(value) = self.trading_engine.as_ref() {
+            os.write_enum(9, *value as i32).unwrap();
         }
         Ok(())
     }
@@ -1442,32 +679,420 @@ impl RequestMessage for SimAccountInfo {
                 34 => {
                     self.currency = is.read_string().map_err(pb_error_to_status)?;
                 }
-                40 => {
-                    let value =
-                        SimAccountStatus::from_i32(is.read_int32().map_err(pb_error_to_status)?);
-                    self.status = value;
-                }
-                50 => {
+                42 => {
                     self.strategy_task_id = is.read_string().map_err(pb_error_to_status)?;
                 }
-                58 => {
+                50 => {
                     self.run_id = is.read_string().map_err(pb_error_to_status)?;
                 }
-                66 => {
+                58 => {
                     self.created_by = is.read_string().map_err(pb_error_to_status)?;
                 }
-                72 => {
-                    self.created_at = is.read_int64().map_err(pb_error_to_status)?;
-                }
-                80 => {
-                    self.updated_at = is.read_int64().map_err(pb_error_to_status)?;
-                }
-                90 => {
+                66 => {
                     let len = is.read_raw_varint64();
                     let len = len.map_err(pb_error_to_status)?;
                     let old_limit = is.push_limit(len);
                     let old_limit = old_limit.unwrap();
                     self.risk_limits.parse_from_input_stream(is)?;
+                    is.pop_limit(old_limit);
+                }
+                72 => {
+                    let value = SimAccountTradingEngine::from_i32(
+                        is.read_int32().map_err(pb_error_to_status)?,
+                    );
+                    self.trading_engine = value;
+                }
+                _ => {
+                    let wire_type = extract_wire_type_from_tag(tag);
+                    if wire_type.is_none() {
+                        return Err(Status::error("消息格式出错".into()));
+                    }
+                    let result = is.skip_field(wire_type.unwrap());
+                    if let Err(err) = result {
+                        return Err(Status::error(err.to_string()));
+                    }
+                }
+            }
+        }
+        Ok(())
+    }
+}
+
+impl std::fmt::Debug for SimAccountRiskLimits {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SimAccountRiskLimits")
+            .field("max_single_order_notional", &self.max_single_order_notional)
+            .field("max_daily_notional", &self.max_daily_notional)
+            .field("max_open_order_count", &self.max_open_order_count)
+            .field("max_contract_quantity", &self.max_contract_quantity)
+            .field("max_quote_age_ms", &self.max_quote_age_ms)
+            .field("max_spread_pct", &self.max_spread_pct)
+            .field("max_abs_spread", &self.max_abs_spread)
+            .field("allow_opening_trades", &self.allow_opening_trades)
+            .field("allow_naked_short_options", &self.allow_naked_short_options)
+            .finish()
+    }
+}
+
+impl Default for SimAccountRiskLimits {
+    fn default() -> Self {
+        SimAccountRiskLimits {
+            max_single_order_notional: None,
+            max_daily_notional: None,
+            max_open_order_count: None,
+            max_contract_quantity: None,
+            max_quote_age_ms: None,
+            max_spread_pct: None,
+            max_abs_spread: None,
+            allow_opening_trades: None,
+            allow_naked_short_options: None,
+            cached_size: x_com_lib::rt::CachedSize::new(),
+        }
+    }
+}
+
+impl RequestMessage for SimAccountRiskLimits {
+    fn compute_size(&self) -> u64 {
+        let mut my_size = 0;
+        if let Some(_v) = self.max_single_order_notional {
+            my_size += 9;
+        }
+        if let Some(_v) = self.max_daily_notional {
+            my_size += 9;
+        }
+        if let Some(v) = self.max_open_order_count {
+            my_size += x_com_lib::rt::int32_size(3, v);
+        }
+        if let Some(v) = self.max_contract_quantity {
+            my_size += x_com_lib::rt::int32_size(4, v);
+        }
+        if let Some(v) = self.max_quote_age_ms {
+            my_size += x_com_lib::rt::int64_size(5, v);
+        }
+        if let Some(_v) = self.max_spread_pct {
+            my_size += 9;
+        }
+        if let Some(_v) = self.max_abs_spread {
+            my_size += 9;
+        }
+        if let Some(_v) = self.allow_opening_trades {
+            my_size += 2;
+        }
+        if let Some(_v) = self.allow_naked_short_options {
+            my_size += 2;
+        }
+        self.cached_size.set(my_size as u32);
+        my_size
+    }
+
+    fn serial_with_output_stream(
+        &self,
+        os: &mut x_com_lib::CodedOutputStream<'_>,
+    ) -> Result<(), Status> {
+        if let Some(v) = self.max_single_order_notional {
+            os.write_double(1, v).unwrap();
+        }
+        if let Some(v) = self.max_daily_notional {
+            os.write_double(2, v).unwrap();
+        }
+        if let Some(v) = self.max_open_order_count {
+            os.write_int32(3, v).unwrap();
+        }
+        if let Some(v) = self.max_contract_quantity {
+            os.write_int32(4, v).unwrap();
+        }
+        if let Some(v) = self.max_quote_age_ms {
+            os.write_int64(5, v).unwrap();
+        }
+        if let Some(v) = self.max_spread_pct {
+            os.write_double(6, v).unwrap();
+        }
+        if let Some(v) = self.max_abs_spread {
+            os.write_double(7, v).unwrap();
+        }
+        if let Some(v) = self.allow_opening_trades {
+            os.write_bool(8, v).unwrap();
+        }
+        if let Some(v) = self.allow_naked_short_options {
+            os.write_bool(9, v).unwrap();
+        }
+        Ok(())
+    }
+
+    fn parse_from_input_stream(
+        &mut self,
+        is: &mut x_com_lib::CodedInputStream<'_>,
+    ) -> Result<(), Status> {
+        while let Some(tag) = is.read_raw_tag_or_eof().unwrap() {
+            match tag {
+                9 => {
+                    self.max_single_order_notional =
+                        Some(is.read_double().map_err(pb_error_to_status)?);
+                }
+                17 => {
+                    self.max_daily_notional = Some(is.read_double().map_err(pb_error_to_status)?);
+                }
+                24 => {
+                    self.max_open_order_count = Some(is.read_int32().map_err(pb_error_to_status)?);
+                }
+                32 => {
+                    self.max_contract_quantity = Some(is.read_int32().map_err(pb_error_to_status)?);
+                }
+                40 => {
+                    self.max_quote_age_ms = Some(is.read_int64().map_err(pb_error_to_status)?);
+                }
+                49 => {
+                    self.max_spread_pct = Some(is.read_double().map_err(pb_error_to_status)?);
+                }
+                57 => {
+                    self.max_abs_spread = Some(is.read_double().map_err(pb_error_to_status)?);
+                }
+                64 => {
+                    self.allow_opening_trades = Some(is.read_bool().map_err(pb_error_to_status)?);
+                }
+                72 => {
+                    self.allow_naked_short_options =
+                        Some(is.read_bool().map_err(pb_error_to_status)?);
+                }
+                _ => {
+                    let wire_type = extract_wire_type_from_tag(tag);
+                    if wire_type.is_none() {
+                        return Err(Status::error("消息格式出错".into()));
+                    }
+                    let result = is.skip_field(wire_type.unwrap());
+                    if let Err(err) = result {
+                        return Err(Status::error(err.to_string()));
+                    }
+                }
+            }
+        }
+        Ok(())
+    }
+}
+
+impl std::fmt::Debug for SimAccountList {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SimAccountList")
+            .field("accounts", &self.accounts)
+            .finish()
+    }
+}
+
+impl Default for SimAccountList {
+    fn default() -> Self {
+        SimAccountList {
+            accounts: Vec::new(),
+            cached_size: x_com_lib::rt::CachedSize::new(),
+        }
+    }
+}
+
+impl RequestMessage for SimAccountList {
+    fn compute_size(&self) -> u64 {
+        let mut my_size = 0;
+        for value in &self.accounts {
+            let len = value.compute_size();
+            my_size += 1 + x_com_lib::rt::compute_raw_varint64_size(len) + len;
+        }
+        self.cached_size.set(my_size as u32);
+        my_size
+    }
+
+    fn serial_with_output_stream(
+        &self,
+        os: &mut x_com_lib::CodedOutputStream<'_>,
+    ) -> Result<(), Status> {
+        for v in &self.accounts {
+            os.write_tag(1, x_com_lib::rt::WireType::LengthDelimited)
+                .unwrap();
+            os.write_raw_varint32(v.cached_size.get() as u32).unwrap();
+            v.serial_with_output_stream(os).unwrap();
+        }
+        Ok(())
+    }
+
+    fn parse_from_input_stream(
+        &mut self,
+        is: &mut x_com_lib::CodedInputStream<'_>,
+    ) -> Result<(), Status> {
+        while let Some(tag) = is.read_raw_tag_or_eof().unwrap() {
+            match tag {
+                10 => {
+                    let len = is.read_raw_varint64();
+                    let len = len.map_err(pb_error_to_status)?;
+                    let old_limit = is.push_limit(len);
+                    let old_limit = old_limit.unwrap();
+                    let mut value = Box::new(SimAccountInfo::default());
+                    value.parse_from_input_stream(is)?;
+                    self.accounts.push(value);
+                    is.pop_limit(old_limit);
+                }
+                _ => {
+                    let wire_type = extract_wire_type_from_tag(tag);
+                    if wire_type.is_none() {
+                        return Err(Status::error("消息格式出错".into()));
+                    }
+                    let result = is.skip_field(wire_type.unwrap());
+                    if let Err(err) = result {
+                        return Err(Status::error(err.to_string()));
+                    }
+                }
+            }
+        }
+        Ok(())
+    }
+}
+
+impl std::fmt::Debug for ListSimAccountAuditEventsRequest {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ListSimAccountAuditEventsRequest")
+            .field("account_id", &self.account_id)
+            .field("start_time", &self.start_time)
+            .field("end_time", &self.end_time)
+            .field("limit", &self.limit)
+            .finish()
+    }
+}
+
+impl Default for ListSimAccountAuditEventsRequest {
+    fn default() -> Self {
+        ListSimAccountAuditEventsRequest {
+            account_id: String::default(),
+            start_time: 0,
+            end_time: 0,
+            limit: 0,
+            cached_size: x_com_lib::rt::CachedSize::new(),
+        }
+    }
+}
+
+impl RequestMessage for ListSimAccountAuditEventsRequest {
+    fn compute_size(&self) -> u64 {
+        let mut my_size = 0;
+        if !self.account_id.is_empty() {
+            my_size += x_com_lib::rt::string_size(1, &self.account_id);
+        }
+        if self.start_time != 0 {
+            my_size += x_com_lib::rt::int64_size(2, self.start_time);
+        }
+        if self.end_time != 0 {
+            my_size += x_com_lib::rt::int64_size(3, self.end_time);
+        }
+        if self.limit != 0 {
+            my_size += x_com_lib::rt::int32_size(4, self.limit);
+        }
+        self.cached_size.set(my_size as u32);
+        my_size
+    }
+
+    fn serial_with_output_stream(
+        &self,
+        os: &mut x_com_lib::CodedOutputStream<'_>,
+    ) -> Result<(), Status> {
+        if !self.account_id.is_empty() {
+            os.write_string(1, &self.account_id).unwrap();
+        }
+        if self.start_time != 0 {
+            os.write_int64(2, self.start_time).unwrap();
+        }
+        if self.end_time != 0 {
+            os.write_int64(3, self.end_time).unwrap();
+        }
+        if self.limit != 0 {
+            os.write_int32(4, self.limit).unwrap();
+        }
+        Ok(())
+    }
+
+    fn parse_from_input_stream(
+        &mut self,
+        is: &mut x_com_lib::CodedInputStream<'_>,
+    ) -> Result<(), Status> {
+        while let Some(tag) = is.read_raw_tag_or_eof().unwrap() {
+            match tag {
+                10 => {
+                    self.account_id = is.read_string().map_err(pb_error_to_status)?;
+                }
+                16 => {
+                    self.start_time = is.read_int64().map_err(pb_error_to_status)?;
+                }
+                24 => {
+                    self.end_time = is.read_int64().map_err(pb_error_to_status)?;
+                }
+                32 => {
+                    self.limit = is.read_int32().map_err(pb_error_to_status)?;
+                }
+                _ => {
+                    let wire_type = extract_wire_type_from_tag(tag);
+                    if wire_type.is_none() {
+                        return Err(Status::error("消息格式出错".into()));
+                    }
+                    let result = is.skip_field(wire_type.unwrap());
+                    if let Err(err) = result {
+                        return Err(Status::error(err.to_string()));
+                    }
+                }
+            }
+        }
+        Ok(())
+    }
+}
+
+impl std::fmt::Debug for SimAccountAuditEventList {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SimAccountAuditEventList")
+            .field("events", &self.events)
+            .finish()
+    }
+}
+
+impl Default for SimAccountAuditEventList {
+    fn default() -> Self {
+        SimAccountAuditEventList {
+            events: Vec::new(),
+            cached_size: x_com_lib::rt::CachedSize::new(),
+        }
+    }
+}
+
+impl RequestMessage for SimAccountAuditEventList {
+    fn compute_size(&self) -> u64 {
+        let mut my_size = 0;
+        for value in &self.events {
+            let len = value.compute_size();
+            my_size += 1 + x_com_lib::rt::compute_raw_varint64_size(len) + len;
+        }
+        self.cached_size.set(my_size as u32);
+        my_size
+    }
+
+    fn serial_with_output_stream(
+        &self,
+        os: &mut x_com_lib::CodedOutputStream<'_>,
+    ) -> Result<(), Status> {
+        for v in &self.events {
+            os.write_tag(1, x_com_lib::rt::WireType::LengthDelimited)
+                .unwrap();
+            os.write_raw_varint32(v.cached_size.get() as u32).unwrap();
+            v.serial_with_output_stream(os).unwrap();
+        }
+        Ok(())
+    }
+
+    fn parse_from_input_stream(
+        &mut self,
+        is: &mut x_com_lib::CodedInputStream<'_>,
+    ) -> Result<(), Status> {
+        while let Some(tag) = is.read_raw_tag_or_eof().unwrap() {
+            match tag {
+                10 => {
+                    let len = is.read_raw_varint64();
+                    let len = len.map_err(pb_error_to_status)?;
+                    let old_limit = is.push_limit(len);
+                    let old_limit = old_limit.unwrap();
+                    let mut value = Box::new(SimAccountAuditEvent::default());
+                    value.parse_from_input_stream(is)?;
+                    self.events.push(value);
                     is.pop_limit(old_limit);
                 }
                 _ => {
@@ -1545,6 +1170,429 @@ impl RequestMessage for SimAccountIdRequest {
             }
         }
         Ok(())
+    }
+}
+
+impl std::fmt::Debug for SimAccountInfo {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SimAccountInfo")
+            .field("account_id", &self.account_id)
+            .field("display_name", &self.display_name)
+            .field("initial_cash", &self.initial_cash)
+            .field("currency", &self.currency)
+            .field("status", &self.status)
+            .field("strategy_task_id", &self.strategy_task_id)
+            .field("run_id", &self.run_id)
+            .field("created_by", &self.created_by)
+            .field("created_at", &self.created_at)
+            .field("updated_at", &self.updated_at)
+            .field("risk_limits", &self.risk_limits)
+            .field("trading_engine", &self.trading_engine)
+            .finish()
+    }
+}
+
+impl Default for SimAccountInfo {
+    fn default() -> Self {
+        SimAccountInfo {
+            account_id: String::default(),
+            display_name: String::default(),
+            initial_cash: 0.0,
+            currency: String::default(),
+            status: SimAccountStatus::from_i32(0),
+            strategy_task_id: String::default(),
+            run_id: String::default(),
+            created_by: String::default(),
+            created_at: 0,
+            updated_at: 0,
+            risk_limits: Box::new(SimAccountRiskLimits::default()),
+            trading_engine: SimAccountTradingEngine::from_i32(0),
+            cached_size: x_com_lib::rt::CachedSize::new(),
+        }
+    }
+}
+
+impl RequestMessage for SimAccountInfo {
+    fn compute_size(&self) -> u64 {
+        let mut my_size = 0;
+        if !self.account_id.is_empty() {
+            my_size += x_com_lib::rt::string_size(1, &self.account_id);
+        }
+        if !self.display_name.is_empty() {
+            my_size += x_com_lib::rt::string_size(2, &self.display_name);
+        }
+        if self.initial_cash != 0.0 {
+            my_size += 9;
+        }
+        if !self.currency.is_empty() {
+            my_size += x_com_lib::rt::string_size(4, &self.currency);
+        }
+        if let Some(value) = self.status.as_ref() {
+            my_size += x_com_lib::rt::int32_size(5, *value as i32);
+        }
+        if !self.strategy_task_id.is_empty() {
+            my_size += x_com_lib::rt::string_size(6, &self.strategy_task_id);
+        }
+        if !self.run_id.is_empty() {
+            my_size += x_com_lib::rt::string_size(7, &self.run_id);
+        }
+        if !self.created_by.is_empty() {
+            my_size += x_com_lib::rt::string_size(8, &self.created_by);
+        }
+        if self.created_at != 0 {
+            my_size += x_com_lib::rt::int64_size(9, self.created_at);
+        }
+        if self.updated_at != 0 {
+            my_size += x_com_lib::rt::int64_size(10, self.updated_at);
+        }
+        {
+            let len = self.risk_limits.compute_size();
+            my_size += 1 + x_com_lib::rt::compute_raw_varint64_size(len) + len;
+        }
+        if let Some(value) = self.trading_engine.as_ref() {
+            my_size += x_com_lib::rt::int32_size(12, *value as i32);
+        }
+        self.cached_size.set(my_size as u32);
+        my_size
+    }
+
+    fn serial_with_output_stream(
+        &self,
+        os: &mut x_com_lib::CodedOutputStream<'_>,
+    ) -> Result<(), Status> {
+        if !self.account_id.is_empty() {
+            os.write_string(1, &self.account_id).unwrap();
+        }
+        if !self.display_name.is_empty() {
+            os.write_string(2, &self.display_name).unwrap();
+        }
+        if self.initial_cash != 0.0 {
+            os.write_double(3, self.initial_cash).unwrap();
+        }
+        if !self.currency.is_empty() {
+            os.write_string(4, &self.currency).unwrap();
+        }
+        if let Some(value) = self.status.as_ref() {
+            os.write_enum(5, *value as i32).unwrap();
+        }
+        if !self.strategy_task_id.is_empty() {
+            os.write_string(6, &self.strategy_task_id).unwrap();
+        }
+        if !self.run_id.is_empty() {
+            os.write_string(7, &self.run_id).unwrap();
+        }
+        if !self.created_by.is_empty() {
+            os.write_string(8, &self.created_by).unwrap();
+        }
+        if self.created_at != 0 {
+            os.write_int64(9, self.created_at).unwrap();
+        }
+        if self.updated_at != 0 {
+            os.write_int64(10, self.updated_at).unwrap();
+        }
+        {
+            os.write_tag(11, x_com_lib::rt::WireType::LengthDelimited)
+                .unwrap();
+            os.write_raw_varint32(self.risk_limits.cached_size.get() as u32)
+                .unwrap();
+            self.risk_limits.serial_with_output_stream(os).unwrap();
+        }
+        if let Some(value) = self.trading_engine.as_ref() {
+            os.write_enum(12, *value as i32).unwrap();
+        }
+        Ok(())
+    }
+
+    fn parse_from_input_stream(
+        &mut self,
+        is: &mut x_com_lib::CodedInputStream<'_>,
+    ) -> Result<(), Status> {
+        while let Some(tag) = is.read_raw_tag_or_eof().unwrap() {
+            match tag {
+                10 => {
+                    self.account_id = is.read_string().map_err(pb_error_to_status)?;
+                }
+                18 => {
+                    self.display_name = is.read_string().map_err(pb_error_to_status)?;
+                }
+                25 => {
+                    self.initial_cash = is.read_double().map_err(pb_error_to_status)?;
+                }
+                34 => {
+                    self.currency = is.read_string().map_err(pb_error_to_status)?;
+                }
+                40 => {
+                    let value =
+                        SimAccountStatus::from_i32(is.read_int32().map_err(pb_error_to_status)?);
+                    self.status = value;
+                }
+                50 => {
+                    self.strategy_task_id = is.read_string().map_err(pb_error_to_status)?;
+                }
+                58 => {
+                    self.run_id = is.read_string().map_err(pb_error_to_status)?;
+                }
+                66 => {
+                    self.created_by = is.read_string().map_err(pb_error_to_status)?;
+                }
+                72 => {
+                    self.created_at = is.read_int64().map_err(pb_error_to_status)?;
+                }
+                80 => {
+                    self.updated_at = is.read_int64().map_err(pb_error_to_status)?;
+                }
+                90 => {
+                    let len = is.read_raw_varint64();
+                    let len = len.map_err(pb_error_to_status)?;
+                    let old_limit = is.push_limit(len);
+                    let old_limit = old_limit.unwrap();
+                    self.risk_limits.parse_from_input_stream(is)?;
+                    is.pop_limit(old_limit);
+                }
+                96 => {
+                    let value = SimAccountTradingEngine::from_i32(
+                        is.read_int32().map_err(pb_error_to_status)?,
+                    );
+                    self.trading_engine = value;
+                }
+                _ => {
+                    let wire_type = extract_wire_type_from_tag(tag);
+                    if wire_type.is_none() {
+                        return Err(Status::error("消息格式出错".into()));
+                    }
+                    let result = is.skip_field(wire_type.unwrap());
+                    if let Err(err) = result {
+                        return Err(Status::error(err.to_string()));
+                    }
+                }
+            }
+        }
+        Ok(())
+    }
+}
+
+impl std::fmt::Debug for ListSimAccountsRequest {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ListSimAccountsRequest")
+            .field("status", &self.status)
+            .field("strategy_task_id", &self.strategy_task_id)
+            .field("run_id", &self.run_id)
+            .field("query", &self.query)
+            .field("include_archived", &self.include_archived)
+            .field("limit", &self.limit)
+            .finish()
+    }
+}
+
+impl Default for ListSimAccountsRequest {
+    fn default() -> Self {
+        ListSimAccountsRequest {
+            status: SimAccountStatus::from_i32(0),
+            strategy_task_id: String::default(),
+            run_id: String::default(),
+            query: String::default(),
+            include_archived: false,
+            limit: 0,
+            cached_size: x_com_lib::rt::CachedSize::new(),
+        }
+    }
+}
+
+impl RequestMessage for ListSimAccountsRequest {
+    fn compute_size(&self) -> u64 {
+        let mut my_size = 0;
+        if let Some(value) = self.status.as_ref() {
+            my_size += x_com_lib::rt::int32_size(1, *value as i32);
+        }
+        if !self.strategy_task_id.is_empty() {
+            my_size += x_com_lib::rt::string_size(2, &self.strategy_task_id);
+        }
+        if !self.run_id.is_empty() {
+            my_size += x_com_lib::rt::string_size(3, &self.run_id);
+        }
+        if !self.query.is_empty() {
+            my_size += x_com_lib::rt::string_size(4, &self.query);
+        }
+        if self.include_archived != false {
+            my_size += 2;
+        }
+        if self.limit != 0 {
+            my_size += x_com_lib::rt::int32_size(6, self.limit);
+        }
+        self.cached_size.set(my_size as u32);
+        my_size
+    }
+
+    fn serial_with_output_stream(
+        &self,
+        os: &mut x_com_lib::CodedOutputStream<'_>,
+    ) -> Result<(), Status> {
+        if let Some(value) = self.status.as_ref() {
+            os.write_enum(1, *value as i32).unwrap();
+        }
+        if !self.strategy_task_id.is_empty() {
+            os.write_string(2, &self.strategy_task_id).unwrap();
+        }
+        if !self.run_id.is_empty() {
+            os.write_string(3, &self.run_id).unwrap();
+        }
+        if !self.query.is_empty() {
+            os.write_string(4, &self.query).unwrap();
+        }
+        if self.include_archived != false {
+            os.write_bool(5, self.include_archived).unwrap();
+        }
+        if self.limit != 0 {
+            os.write_int32(6, self.limit).unwrap();
+        }
+        Ok(())
+    }
+
+    fn parse_from_input_stream(
+        &mut self,
+        is: &mut x_com_lib::CodedInputStream<'_>,
+    ) -> Result<(), Status> {
+        while let Some(tag) = is.read_raw_tag_or_eof().unwrap() {
+            match tag {
+                8 => {
+                    let value =
+                        SimAccountStatus::from_i32(is.read_int32().map_err(pb_error_to_status)?);
+                    self.status = value;
+                }
+                18 => {
+                    self.strategy_task_id = is.read_string().map_err(pb_error_to_status)?;
+                }
+                26 => {
+                    self.run_id = is.read_string().map_err(pb_error_to_status)?;
+                }
+                34 => {
+                    self.query = is.read_string().map_err(pb_error_to_status)?;
+                }
+                40 => {
+                    self.include_archived = is.read_bool().map_err(pb_error_to_status)?;
+                }
+                48 => {
+                    self.limit = is.read_int32().map_err(pb_error_to_status)?;
+                }
+                _ => {
+                    let wire_type = extract_wire_type_from_tag(tag);
+                    if wire_type.is_none() {
+                        return Err(Status::error("消息格式出错".into()));
+                    }
+                    let result = is.skip_field(wire_type.unwrap());
+                    if let Err(err) = result {
+                        return Err(Status::error(err.to_string()));
+                    }
+                }
+            }
+        }
+        Ok(())
+    }
+}
+
+impl std::fmt::Debug for SimAccountServiceHealth {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SimAccountServiceHealth")
+            .field("sqlite_path", &self.sqlite_path)
+            .field("account_count", &self.account_count)
+            .field("audit_event_count", &self.audit_event_count)
+            .field("updated_at", &self.updated_at)
+            .finish()
+    }
+}
+
+impl Default for SimAccountServiceHealth {
+    fn default() -> Self {
+        SimAccountServiceHealth {
+            sqlite_path: String::default(),
+            account_count: 0,
+            audit_event_count: 0,
+            updated_at: 0,
+            cached_size: x_com_lib::rt::CachedSize::new(),
+        }
+    }
+}
+
+impl RequestMessage for SimAccountServiceHealth {
+    fn compute_size(&self) -> u64 {
+        let mut my_size = 0;
+        if !self.sqlite_path.is_empty() {
+            my_size += x_com_lib::rt::string_size(1, &self.sqlite_path);
+        }
+        if self.account_count != 0 {
+            my_size += x_com_lib::rt::int64_size(2, self.account_count);
+        }
+        if self.audit_event_count != 0 {
+            my_size += x_com_lib::rt::int64_size(3, self.audit_event_count);
+        }
+        if self.updated_at != 0 {
+            my_size += x_com_lib::rt::int64_size(4, self.updated_at);
+        }
+        self.cached_size.set(my_size as u32);
+        my_size
+    }
+
+    fn serial_with_output_stream(
+        &self,
+        os: &mut x_com_lib::CodedOutputStream<'_>,
+    ) -> Result<(), Status> {
+        if !self.sqlite_path.is_empty() {
+            os.write_string(1, &self.sqlite_path).unwrap();
+        }
+        if self.account_count != 0 {
+            os.write_int64(2, self.account_count).unwrap();
+        }
+        if self.audit_event_count != 0 {
+            os.write_int64(3, self.audit_event_count).unwrap();
+        }
+        if self.updated_at != 0 {
+            os.write_int64(4, self.updated_at).unwrap();
+        }
+        Ok(())
+    }
+
+    fn parse_from_input_stream(
+        &mut self,
+        is: &mut x_com_lib::CodedInputStream<'_>,
+    ) -> Result<(), Status> {
+        while let Some(tag) = is.read_raw_tag_or_eof().unwrap() {
+            match tag {
+                10 => {
+                    self.sqlite_path = is.read_string().map_err(pb_error_to_status)?;
+                }
+                16 => {
+                    self.account_count = is.read_int64().map_err(pb_error_to_status)?;
+                }
+                24 => {
+                    self.audit_event_count = is.read_int64().map_err(pb_error_to_status)?;
+                }
+                32 => {
+                    self.updated_at = is.read_int64().map_err(pb_error_to_status)?;
+                }
+                _ => {
+                    let wire_type = extract_wire_type_from_tag(tag);
+                    if wire_type.is_none() {
+                        return Err(Status::error("消息格式出错".into()));
+                    }
+                    let result = is.skip_field(wire_type.unwrap());
+                    if let Err(err) = result {
+                        return Err(Status::error(err.to_string()));
+                    }
+                }
+            }
+        }
+        Ok(())
+    }
+}
+
+impl SimAccountTradingEngine {
+    pub fn from_i32(value: i32) -> Option<SimAccountTradingEngine> {
+        match value {
+            0 => Some(Self::Unknown),
+            1 => Some(Self::DqteaSim),
+            2 => Some(Self::MoomooSimulate),
+            _ => None,
+        }
     }
 }
 

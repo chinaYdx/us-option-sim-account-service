@@ -12,7 +12,7 @@ use x_com_lib::{time_utils, Status};
 
 use crate::x_com::source_api::{
     SimAccountAuditAction, SimAccountAuditEvent, SimAccountInfo, SimAccountRiskLimits,
-    SimAccountStatus,
+    SimAccountStatus, SimAccountTradingEngine,
 };
 
 type XResult<T> = x_com_lib::x_core::Result<T>;
@@ -301,13 +301,20 @@ CREATE INDEX IF NOT EXISTS idx_sim_account_status ON sim_account(status);
 CREATE INDEX IF NOT EXISTS idx_sim_account_audit_account_time ON sim_account_audit_event(account_id, event_at);
 ",
         )
-        .map_err(status_from_error)
+        .map_err(status_from_error)?;
+        ensure_column(
+            &conn,
+            "sim_account",
+            "trading_engine",
+            "INTEGER NOT NULL DEFAULT 1",
+        )?;
+        Ok(())
     }
 }
 
 fn insert_account_tx(tx: &Transaction<'_>, account: &SimAccountInfo) -> XResult<()> {
     tx.execute(
-        "INSERT INTO sim_account(account_id, display_name, initial_cash, currency, status, strategy_task_id, run_id, created_by, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO sim_account(account_id, display_name, initial_cash, currency, status, strategy_task_id, run_id, created_by, created_at, updated_at, trading_engine) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         params![
             account.account_id,
             account.display_name,
@@ -318,7 +325,8 @@ fn insert_account_tx(tx: &Transaction<'_>, account: &SimAccountInfo) -> XResult<
             account.run_id,
             account.created_by,
             account.created_at,
-            account.updated_at
+            account.updated_at,
+            trading_engine_value(account.trading_engine)
         ],
     )
     .map(|_| ())
@@ -420,7 +428,7 @@ fn insert_audit_tx(
 
 fn get_account_conn(conn: &Connection, account_id: &str) -> XResult<Option<Box<SimAccountInfo>>> {
     let mut stmt = conn
-        .prepare("SELECT account_id, display_name, initial_cash, currency, status, strategy_task_id, run_id, created_by, created_at, updated_at FROM sim_account WHERE account_id = ?")
+        .prepare("SELECT account_id, display_name, initial_cash, currency, status, strategy_task_id, run_id, created_by, created_at, updated_at, trading_engine FROM sim_account WHERE account_id = ?")
         .map_err(status_from_error)?;
     let account = stmt
         .query_row(params![account_id], account_from_row)
@@ -435,7 +443,7 @@ fn get_account_conn(conn: &Connection, account_id: &str) -> XResult<Option<Box<S
 
 fn get_account_tx(tx: &Transaction<'_>, account_id: &str) -> XResult<Option<Box<SimAccountInfo>>> {
     let mut stmt = tx
-        .prepare("SELECT account_id, display_name, initial_cash, currency, status, strategy_task_id, run_id, created_by, created_at, updated_at FROM sim_account WHERE account_id = ?")
+        .prepare("SELECT account_id, display_name, initial_cash, currency, status, strategy_task_id, run_id, created_by, created_at, updated_at, trading_engine FROM sim_account WHERE account_id = ?")
         .map_err(status_from_error)?;
     let account = stmt
         .query_row(params![account_id], account_from_row)
@@ -479,6 +487,7 @@ fn account_from_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<Box<SimAccountI
     account.created_by = row.get(7)?;
     account.created_at = row.get(8)?;
     account.updated_at = row.get(9)?;
+    account.trading_engine = trading_engine_from_i32(row.get::<_, i32>(10)?);
     Ok(account)
 }
 
@@ -533,6 +542,18 @@ pub fn status_value(value: Option<SimAccountStatus>) -> i32 {
     value.unwrap_or(SimAccountStatus::Unknown) as i32
 }
 
+pub fn trading_engine_from_i32(value: i32) -> Option<SimAccountTradingEngine> {
+    match value {
+        1 => Some(SimAccountTradingEngine::DqteaSim),
+        2 => Some(SimAccountTradingEngine::MoomooSimulate),
+        _ => Some(SimAccountTradingEngine::Unknown),
+    }
+}
+
+pub fn trading_engine_value(value: Option<SimAccountTradingEngine>) -> i32 {
+    value.unwrap_or(SimAccountTradingEngine::DqteaSim) as i32
+}
+
 fn audit_action_from_i32(value: i32) -> Option<SimAccountAuditAction> {
     match value {
         1 => Some(SimAccountAuditAction::Created),
@@ -567,4 +588,22 @@ fn new_event_id(now: i64) -> String {
 
 fn status_from_error(error: impl std::fmt::Display) -> Status {
     Status::error(error.to_string())
+}
+
+fn ensure_column(conn: &Connection, table: &str, column: &str, column_sql: &str) -> XResult<()> {
+    let mut stmt = conn
+        .prepare(&format!("PRAGMA table_info({table})"))
+        .map_err(status_from_error)?;
+    let columns = stmt
+        .query_map([], |row| row.get::<_, String>(1))
+        .map_err(status_from_error)?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(status_from_error)?;
+    if columns.iter().any(|name| name == column) {
+        return Ok(());
+    }
+    conn.execute_batch(&format!(
+        "ALTER TABLE {table} ADD COLUMN {column} {column_sql};"
+    ))
+    .map_err(status_from_error)
 }

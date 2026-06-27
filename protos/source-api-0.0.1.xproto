@@ -14,6 +14,12 @@ enum SimAccountAuditAction {
   RiskLimitsChanged = 5;
 }
 
+enum SimAccountTradingEngine {
+  Unknown = 0;
+  DqteaSim = 1;
+  MoomooSimulate = 2;
+}
+
 message SimAccountRiskLimits {
   optional double max_single_order_notional = 1;
   optional double max_daily_notional = 2;
@@ -38,6 +44,7 @@ message SimAccountInfo {
   int64 created_at = 9;
   int64 updated_at = 10;
   SimAccountRiskLimits risk_limits = 11;
+  SimAccountTradingEngine trading_engine = 12;
 }
 
 message CreateSimAccountRequest {
@@ -49,6 +56,7 @@ message CreateSimAccountRequest {
   string run_id = 6;
   string created_by = 7;
   SimAccountRiskLimits risk_limits = 8;
+  SimAccountTradingEngine trading_engine = 9;
 }
 
 message SimAccountIdRequest {

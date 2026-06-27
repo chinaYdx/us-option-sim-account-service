@@ -73,6 +73,7 @@ impl UsOptionSimAccountService {
         account.created_at = now;
         account.updated_at = now;
         account.risk_limits = param.risk_limits;
+        account.trading_engine = normalize_trading_engine(param.trading_engine);
 
         self.store.create_account(
             &account,
@@ -242,6 +243,19 @@ fn normalize_currency(value: &str) -> String {
     }
 }
 
+fn normalize_trading_engine(
+    value: Option<SimAccountTradingEngine>,
+) -> Option<SimAccountTradingEngine> {
+    match value {
+        Some(SimAccountTradingEngine::MoomooSimulate) => {
+            Some(SimAccountTradingEngine::MoomooSimulate)
+        }
+        Some(SimAccountTradingEngine::DqteaSim) | Some(SimAccountTradingEngine::Unknown) | None => {
+            Some(SimAccountTradingEngine::DqteaSim)
+        }
+    }
+}
+
 fn default_string(value: &str, default_value: &str) -> String {
     if value.is_empty() {
         default_value.to_owned()
@@ -314,6 +328,10 @@ mod tests {
         assert_eq!(created.currency, "USD");
         assert_eq!(created.initial_cash, 100_000.0);
         assert_eq!(created.risk_limits.max_open_order_count, Some(5));
+        assert_eq!(
+            created.trading_engine,
+            Some(SimAccountTradingEngine::DqteaSim)
+        );
 
         let mut get = Box::new(SimAccountIdRequest::default());
         get.account_id = "acct-001".to_owned();
@@ -345,10 +363,7 @@ mod tests {
             .expect("update");
         assert_eq!(updated.strategy_task_id, "task-002");
         assert_eq!(updated.run_id, "run-002");
-        assert_eq!(
-            updated.status,
-            Some(SimAccountStatus::Paused)
-        );
+        assert_eq!(updated.status, Some(SimAccountStatus::Paused));
         assert_eq!(updated.risk_limits.max_contract_quantity, Some(20));
 
         let mut audit_req = Box::new(ListSimAccountAuditEventsRequest::default());
@@ -358,8 +373,10 @@ mod tests {
             .await
             .expect("audit");
         assert_eq!(audit.events.len(), 2);
-        assert!(audit.events.iter().any(|event| event.action
-            == Some(SimAccountAuditAction::RiskLimitsChanged)));
+        assert!(audit
+            .events
+            .iter()
+            .any(|event| event.action == Some(SimAccountAuditAction::RiskLimitsChanged)));
 
         let mut restarted = UsOptionSimAccountService::new();
         restarted.init_for_test(&root).await.expect("restart");
@@ -371,6 +388,10 @@ mod tests {
             .expect("get after restart");
         assert_eq!(loaded.strategy_task_id, "task-002");
         assert_eq!(loaded.risk_limits.max_contract_quantity, Some(20));
+        assert_eq!(
+            loaded.trading_engine,
+            Some(SimAccountTradingEngine::DqteaSim)
+        );
 
         let health = restarted
             .get_sim_account_service_health(test_ctx())
@@ -411,6 +432,32 @@ mod tests {
             .await
             .expect_err("bad initial_cash must fail");
         assert!(format!("{err:?}").contains("initial_cash"));
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn create_supports_moomoo_simulate_trading_engine() {
+        let root = temp_root();
+        let mut service = UsOptionSimAccountService::new();
+        service.init_for_test(&root).await.expect("init");
+
+        let mut req = create_request("acct-moomoo-sim");
+        req.trading_engine = Some(SimAccountTradingEngine::MoomooSimulate);
+        let created = service
+            .create_sim_account(test_ctx(), req)
+            .await
+            .expect("create moomoo simulate");
+        assert_eq!(
+            created.trading_engine,
+            Some(SimAccountTradingEngine::MoomooSimulate)
+        );
+
+        let mut get = Box::new(SimAccountIdRequest::default());
+        get.account_id = "acct-moomoo-sim".to_owned();
+        let fetched = service.get_sim_account(test_ctx(), get).await.expect("get");
+        assert_eq!(
+            fetched.trading_engine,
+            Some(SimAccountTradingEngine::MoomooSimulate)
+        );
     }
 
     #[tokio::test(flavor = "multi_thread")]

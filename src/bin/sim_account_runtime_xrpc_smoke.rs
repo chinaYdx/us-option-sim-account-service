@@ -113,18 +113,17 @@ async fn run() -> Result<()> {
     if audit.events.len() != 2 {
         bail!("unexpected audit event count: {}", audit.events.len());
     }
-    if !audit.events.iter().any(|event| {
-        event.action == Some(SimAccountAuditAction::StatusChanged)
-    }) {
+    if !audit
+        .events
+        .iter()
+        .any(|event| event.action == Some(SimAccountAuditAction::StatusChanged))
+    {
         bail!("audit events did not include status change");
     }
 
-    let health = invoke_no_param_once::<SimAccountServiceHealth>(
-        &outer_service,
-        args.xrpc_port,
-        HEALTH_API,
-    )
-    .await?;
+    let health =
+        invoke_no_param_once::<SimAccountServiceHealth>(&outer_service, args.xrpc_port, HEALTH_API)
+            .await?;
     if health.account_count != 1 || health.audit_event_count != 2 {
         bail!(
             "unexpected health counts: accounts={} audit={}",
